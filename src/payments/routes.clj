@@ -4,12 +4,24 @@
             [common-labsoft.pedestal.interceptors.adapt :as int-adapt]
             [common-labsoft.pedestal.interceptors.schema :as int-schema]
             [io.pedestal.http.route.definition :refer [defroutes]]
-            [io.pedestal.http.body-params :as body-params]))
+            [io.pedestal.http.body-params :as body-params]
+            [payments.controllers.card :as controllers.card]
+            [payments.adapters.card :as adapters.card]
+            [payments.wire.card :as wire.card]))
 
-(defn hello-world
-  [request]
+(defn one-card
+  [{{:keys [datomic]} :components card-id :card-id}]
   {:status 200
-   :body   {:res "Hello, World!"}})
+   :body   (-> (controllers.card/one-card card-id datomic)
+               (adapters.card/internal->wire-document))})
+
+(defn register-new-card
+  [{{:keys [datomic]} :components new-card :data}]
+  {:status 200
+   :schema wire.card/CardDocument
+   :body   (-> (adapters.card/new-card-wire->internal new-card)
+               (controllers.card/register-new-card! datomic)
+               (adapters.card/internal->wire-document))})
 
 (defroutes routes
   [[["/" ^:interceptors [int-err/catch!
@@ -18,4 +30,9 @@
                          int-adapt/content-neg-intc
                          int-auth/auth
                          int-schema/coerce-output]
-     {:get [:hello-world hello-world]}]]])
+     ["/cards"
+      {:post [:register-new-card ^:interceptors [(int-schema/coerce wire.card/CreateNewCardDocument)]
+              register-new-card]}
+
+      ["/:id" ^:interceptors [(int-adapt/path->uuid :id :card-id)]
+       {:get [:one-card one-card]}]]]]])
