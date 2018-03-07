@@ -11,3 +11,7 @@
 (s/defn one-card :- models.card/Card
   [card-id :- s/Uuid, datomic :- protocols.datomic/IDatomic]
   (datomic.card/lookup! card-id datomic))
+
+(s/defn customer-cards :- #{models.card/Card}
+  [customer-id :- s/Uuid, datomic :- protocols.datomic/IDatomic]
+  (datomic.card/cards-by-customer-id customer-id datomic))

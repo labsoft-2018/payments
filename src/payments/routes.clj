@@ -23,6 +23,13 @@
                (controllers.card/register-new-card! datomic)
                (adapters.card/internal->wire-document))})
 
+(defn customer-cards
+  [{{:keys [datomic]} :components customer-id :customer-id}]
+  {:status 200
+   :schema wire.card/CardsDocument
+   :body   (-> (controllers.card/customer-cards customer-id datomic)
+               (adapters.card/internals->wire-documents))})
+
 (defroutes routes
   [[["/" ^:interceptors [int-err/catch!
                          (body-params/body-params)
@@ -30,6 +37,10 @@
                          int-adapt/content-neg-intc
                          int-auth/auth
                          int-schema/coerce-output]
+
+     ["/customers/:id" ^:interceptors [(int-adapt/path->uuid :id :customer-id)]
+      ["/cards" {:get [:customer-cards customer-cards]}]]
+
      ["/cards"
       {:post [:register-new-card ^:interceptors [(int-schema/coerce wire.card/CreateNewCardDocument)]
               register-new-card]}

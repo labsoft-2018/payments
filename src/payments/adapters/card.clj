@@ -11,3 +11,7 @@
 (s/defn internal->wire-document :- wire.card/CardDocument
   [card :- models.card/Card]
   {:card (misc/map-keys name card)})
+
+(s/defn internals->wire-documents :- wire.card/CardsDocument
+  [cards :- [models.card/Card]]
+  {:cards (mapv #(misc/map-keys name %) cards)})

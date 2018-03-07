@@ -13,7 +13,7 @@
                  [labsoft-2018/common-labsoft "0.9.0-SNAPSHOT"]]
   :resource-paths ["resources"]
   :min-lein-version "2.0.0"
-  :profiles {:dev {:aliases {"run-dev" ["trampoline" "run" "-m" "payments.service/start"]}
+  :profiles {:dev {:aliases {"run-dev" ["trampoline" "run" "-m" "payments.service/start!"]}
                    :dependencies [[io.pedestal/pedestal.service-tools "0.5.3"]]
                    :injections [(require 'common-labsoft.misc)
                                 (require 'common-labsoft.time)]}
