@@ -10,12 +10,12 @@
   (let [prepared-card (assoc card :card/created-at (time/now))]
     (datomic/insert! :card/id prepared-card datomic)))
 
-(s/defn lookup! :- #{models.card/Card}
+(s/defn lookup! :- [models.card/Card]
   [card-id :- s/Uuid, datomic :- protocols.datomic/IDatomic]
   (datomic/lookup! :card/id card-id (datomic/db datomic)))
 
-(s/defn cards-by-customer-id :- #{models.card/Card}
+(s/defn cards-by-customer-id :- [models.card/Card]
   [customer-id :- s/Uuid, datomic :- protocols.datomic/IDatomic]
-  (datomic/entities '{:find  [?e]
+  (datomic/entities '{:find  [?card]
                       :in    [$ ?customer-id]
-                      :where [[?e :card/customer-id ?customer-id]]} (datomic/db datomic) customer-id))
+                      :where [[?card :card/customer-id ?customer-id]]} (datomic/db datomic) customer-id))

@@ -9,8 +9,8 @@
 (def payment-skeleton {:payment/id           {:schema s/Uuid :id true}
                        :payment/status       {:schema PaymentStatus :required true}
                        :payment/card-id      {:schema s/Uuid :required true}
-                       :payment/amount-cents {:schema s/Int :required true}
+                       :payment/amount       {:schema BigDecimal :required true}
                        :payment/created-at   {:schema time/LocalDateTime :required true}
                        :payment/confirmed-at {:schema time/LocalDateTime :required false}
-                       :payment/refused-at   {:Schema time/LocalDateTime :required false}})
+                       :payment/refused-at   {:schema time/LocalDateTime :required false}})
 (s/defschema Payment (schema/skel->schema payment-skeleton))

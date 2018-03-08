@@ -36,6 +36,17 @@ jobs:
           $(aws ecr get-login --no-include-email)
           docker push $TAG
 
+  vsts-push:
+    docker:
+      - image: circleci/clojure:lein-2.7.1
+    working_directory: ~/repo
+    steps:
+      - add_ssh_keys
+      - checkout
+      - run: ssh-keyscan vs-ssh.visualstudio.com >> ~/.ssh/known_hosts
+      - run: git push ssh://2018-PCS2044-LAMBDA@vs-ssh.visualstudio.com:22/quack-pack/_ssh/payments master
+
+
   deploy:
     <<: *defaults
     steps:
@@ -52,6 +63,12 @@ workflows:
               only: master
           requires:
             - test
+      - vsts-push:
+          filters:
+            branches:
+              only: master
+          requires:
+            - build
       - promote:
           filters:
             branches:

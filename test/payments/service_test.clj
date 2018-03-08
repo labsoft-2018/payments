@@ -4,5 +4,5 @@
             [common-labsoft.test-helpers :as th]))
 
 (th/with-service [ser/start! ser/stop!] [system service]
- (fact "Http Test"
+ #_(fact "Http Test"
    (th/request! service :get "/") => {:res "Hello, World!"}))
