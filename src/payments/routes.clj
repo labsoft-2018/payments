@@ -15,6 +15,7 @@
 (defn one-card
   [{{:keys [datomic]} :components card-id :card-id}]
   {:status 200
+   :schema wire.card/CardDocument
    :body   (-> (controllers.card/one-card card-id datomic)
                (adapters.card/internal->wire-document))})
 
@@ -36,8 +37,16 @@
 (defn new-payment-request!
   [{{:keys [datomic http]} :components payment-request :data}]
   {:status 202
+   :schema wire.payment/PaymentDocument
    :body   (-> (adapters.payment/payment-request->internal payment-request)
                (controllers.payment/new-payment-request! datomic http)
+               (adapters.payment/internal->document))})
+
+(defn one-payment
+  [{{:keys [datomic]} :components payment-id :payment-id}]
+  {:status 200
+   :schema wire.payment/PaymentDocument
+   :body   (-> (controllers.payment/one-payment payment-id datomic)
                (adapters.payment/internal->document))})
 
 (defroutes routes
@@ -53,7 +62,10 @@
 
      ["/payments"
       {:post [:new-payment-request ^:interceptors [(int-schema/coerce wire.payment/PaymentRequest)]
-              new-payment-request!]}]
+              new-payment-request!]}
+      ["/:id"
+       {:post [:one-payment ^:interceptors [(int-adapt/path->uuid :id :payment-id)]
+               one-payment]}]]
 
      ["/cards"
       {:post [:register-new-card ^:interceptors [(int-schema/coerce wire.card/CreateNewCardDocument)]

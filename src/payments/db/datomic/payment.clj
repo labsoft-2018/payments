@@ -5,6 +5,11 @@
             [common-labsoft.time :as time]
             [common-labsoft.datomic.api :as datomic]))
 
+(s/defn lookup! :- models.payment/PaymentStatus
+  [payment-id :- s/Uuid
+   datomic :- protocols.datomic/IDatomic]
+  (datomic/lookup! :payment/id payment-id datomic))
+
 (s/defn insert! :- models.payment/Payment
   [payment :- models.payment/Payment
    datomic :- protocols.datomic/IDatomic]

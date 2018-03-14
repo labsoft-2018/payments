@@ -9,12 +9,13 @@
                         :payment.status/refused})
 (s/defschema PaymentStatus (apply s/enum payment-statuses))
 
-(def payment-skeleton {:payment/id           {:schema s/Uuid :id true}
-                       :payment/status       {:schema PaymentStatus :required true}
-                       :payment/card-id      {:schema s/Uuid :required true}
-                       :payment/order-id     {:schema s/Uuid :required true}
-                       :payment/amount       {:schema BigDecimal :required true}
-                       :payment/created-at   {:schema time/LocalDateTime :required true}
-                       :payment/confirmed-at {:schema time/LocalDateTime :required false}
-                       :payment/refused-at   {:schema time/LocalDateTime :required false}})
+(def payment-skeleton {:payment/id            {:schema s/Uuid :id true}
+                       :payment/status        {:schema PaymentStatus :required true}
+                       :payment/card-id       {:schema s/Uuid :required true}
+                       :payment/order-id      {:schema s/Uuid :required true :unique true}
+                       :payment/amount        {:schema BigDecimal :required true}
+                       :payment/created-at    {:schema time/LocalDateTime :required true}
+                       :payment/authorized-at {:schema time/LocalDateTime :required false}
+                       :payment/captured-at   {:schema time/LocalDateTime :required false}
+                       :payment/refused-at    {:schema time/LocalDateTime :required false}})
 (s/defschema Payment (schema/skel->schema payment-skeleton))
