@@ -30,11 +30,11 @@
   [payment-request :- models.payment/Payment
    datomic :- protocols.datomic/IDatomic,
    http :- protocols.http-client/IHttpClient]
-  (let [payment (datomic.payment/insert! payment-request datomic)
+  (let [payment     (datomic.payment/insert! payment-request datomic)
         authorized? (diplomat.http/authorize-payment! payment http)]
-    (-> (payment-for-result payment authorized?)
-        (datomic.payment/update! datomic))
-    (when-not authorized?
+    (if authorized?
+      (-> (payment-for-result payment authorized?)
+          (datomic.payment/update! datomic))
       (exception/bad-request! {:payment payment}))))
 
 (s/defn capture-payment!
