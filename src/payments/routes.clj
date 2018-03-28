@@ -57,11 +57,13 @@
                             int-auth/auth
                             int-schema/coerce-output]
 
-     ["/customers/:id" ^:interceptors [(int-adapt/path->uuid :id :customer-id)]
+     ["/customers/:id" ^:interceptors [(int-adapt/path->uuid :id :customer-id)
+                                       (int-auth/user-identity :id)]
       ["/cards" {:get [:customer-cards customer-cards]}]]
 
      ["/payments"
-      {:post [:new-payment-request ^:interceptors [(int-schema/coerce wire.payment/PaymentRequest)]
+      {:post [:new-payment-request ^:interceptors [(int-auth/allow-scopes? "jaiminho" "admin")
+                                                   (int-schema/coerce wire.payment/PaymentRequest)]
               new-payment-request!]}
       ["/:id"
        {:post [:one-payment ^:interceptors [(int-adapt/path->uuid :id :payment-id)]
