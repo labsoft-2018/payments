@@ -6,7 +6,6 @@
 
 (s/defn new-card-wire->internal :- models.card/Card
   [{card :card} :- wire.card/CreateNewCardDocument]
-  (prn "NEW CARDS" card)
   (misc/map-keys #(keyword "card" (name %)) card))
 
 (s/defn internal->wire-document :- wire.card/CardDocument
@@ -15,5 +14,4 @@
 
 (s/defn internals->wire-documents :- wire.card/CardsDocument
   [cards :- [models.card/Card]]
-  (prn "ALL CARDS" cards)
   {:cards (mapv #(misc/map-keys (comp keyword name) %) cards)})

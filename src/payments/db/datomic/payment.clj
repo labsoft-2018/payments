@@ -8,7 +8,7 @@
 (s/defn lookup! :- models.payment/PaymentStatus
   [payment-id :- s/Uuid
    datomic :- protocols.datomic/IDatomic]
-  (datomic/lookup! :payment/id payment-id datomic))
+  (datomic/lookup! :payment/id payment-id (datomic/db datomic)))
 
 (s/defn insert! :- models.payment/Payment
   [payment :- models.payment/Payment

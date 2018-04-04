@@ -3,7 +3,7 @@
             [common-labsoft.schema :as schema])
   (:import (java.time LocalDateTime)))
 
-(def payment-statuses #{:requested :authorized :captures :refused})
+(def payment-statuses #{:requested :authorized :captured :refused})
 (s/defschema PaymentStatus (apply s/enum payment-statuses))
 
 (def payment-skeleton {:id         {:schema s/Uuid :required true}
