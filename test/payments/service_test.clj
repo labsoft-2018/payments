@@ -15,65 +15,63 @@
                           :exp-date    #time/date "2020-10-10"
                           :customer-id customer-id}})
 
-(defn create-card [service]
+(defn create-card [world]
   (th/with-token {:token/scopes ["jaiminho"]}
-    (th/request! service :post "/api/cards" card-payload)))
+    (th/request! world :post "/api/cards" card-payload)))
 
-(defn customer-cards [service]
+(defn customer-cards [world]
   (th/with-token {:token/scopes ["admin"]}
-    (th/request! service :get (str "/api/customers/" customer-id "/cards"))))
+    (th/request! world :get (str "/api/customers/" customer-id "/cards"))))
 
-(defn create-payment [service]
+(defn create-payment [world]
+  (->> (th/with-token {:token/scopes ["jaiminho"]}
+         (th/request! world :post "/api/payments" {:payment {:amount   50.0M
+                                                             :card-id  card-id
+                                                             :order-id order-id}}))
+       (th/assoc-to-world world :payment)))
+
+(defn one-payment [world]
   (th/with-token {:token/scopes ["jaiminho"]}
-    (th/request! service :post "/api/payments" {:payment {:amount   50.0M
-                                                          :card-id  card-id
-                                                          :order-id order-id}})))
+    (th/request! world :get (str "/api/payments/" (th/get-in-world world [:payment :payment :id])))))
 
-(defn one-payment [service world]
-  (th/with-token {:token/scopes ["jaiminho"]}
-    (th/request! service :get (str "/api/payments/" (th/get-in-world world [:payment :payment :id])))))
+(defn capture-payment [world]
+  (sqs/capture-payment! {:payment {:id (misc/str->uuid (th/get-in-world world [:payment :payment :id]))}} (th/get-system world)))
 
-(defn capture-payment [system world]
-  (sqs/capture-payment! {:payment {:id (misc/str->uuid (th/get-in-world world [:payment :payment :id]))}} system))
+(th/with-world [world ser/restart!]
+  (fact "Creates a new card"
+    (create-card world) => (match {:card {:id          string?
+                                          :name        "test"
+                                          :number      "1234"
+                                          :cvv         "123"
+                                          :exp-date    "2020-10-10"
+                                          :customer-id (str customer-id)}}))
 
-(th/with-world world
-  (th/with-service [ser/start! ser/stop!] [system service]
+  (fact "Get all customer cards"
+    (customer-cards world) => (match {:cards [{:customer-id (str customer-id)
+                                               :cvv         "123"
+                                               :exp-date    "2020-10-10"
+                                               :name        "test"
+                                               :number      "1234"}]}))
 
-    (fact "Creates a new card"
-      (create-card service) => (match {:card {:id          string?
-                                              :name        "test"
-                                              :number      "1234"
-                                              :cvv         "123"
-                                              :exp-date    "2020-10-10"
-                                              :customer-id (str customer-id)}}))
+  (create-payment world)
+  (fact "Creates a new payment request"
+    (th/get-in-world world [:payment]) => (match {:payment {:amount   50.0
+                                                            :card-id  (str card-id)
+                                                            :id       string?
+                                                            :order-id (str order-id)
+                                                            :status   "authorized"}}))
 
-    (fact "Get all customer cards"
-      (customer-cards service) => (match {:cards [{:customer-id (str customer-id)
-                                                   :cvv         "123"
-                                                   :exp-date    "2020-10-10"
-                                                   :name        "test"
-                                                   :number      "1234"}]}))
+  (fact "we can retrieve this payment"
+    (one-payment world) => (match {:payment {:amount   50.0
+                                             :card-id  (str card-id)
+                                             :id       string?
+                                             :order-id (str order-id)
+                                             :status   "authorized"}}))
 
-    (th/assoc-to-world world :payment (create-payment service))
-    (fact "Creates a new payment request"
-      (th/get-in-world world [:payment]) => (match {:payment {:amount   50.0
-                                                              :card-id  (str card-id)
-                                                              :id       string?
-                                                              :order-id (str order-id)
-                                                              :status   "authorized"}}))
-
-    (fact "we can retrieve this payment"
-      (one-payment service world) => (match {:payment {:amount   50.0
-                                                       :card-id  (str card-id)
-                                                       :id       string?
-                                                       :order-id (str order-id)
-                                                       :status   "authorized"}}))
-
-    (capture-payment system world)
-
-    (fact "the payment status is updated"
-      (one-payment service world) => (match {:payment {:amount   50.0
-                                                       :card-id  (str card-id)
-                                                       :id       string?
-                                                       :order-id (str order-id)
-                                                       :status   "captured"}}))))
+  (capture-payment world)
+  (fact "the payment status is updated"
+    (one-payment world) => (match {:payment {:amount   50.0
+                                             :card-id  (str card-id)
+                                             :id       string?
+                                             :order-id (str order-id)
+                                             :status   "captured"}})))
